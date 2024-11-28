@@ -1,0 +1,62 @@
+name: Sync docs to KitOps repository
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "docs/"
+
+env:
+  KITOPS_PATH: "kitops-clone"
+  PYKITOPS_DOCS_PATH: "docs/src/docs/pykitops"
+
+jobs:
+  sync-docs-to-kitops:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout pykitops repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29   ## v4.1.6
+
+      - name: Checkout KitOps repository to subdirectory
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29   ## v4.1.6
+        with:
+          token: ${{ secrets.KITOPS_PAT }}
+          repository: jozu-ai/kitops
+          ref: main
+          path: ${{ env.KITOPS_PATH }}
+
+      - name: Copy pykitops docs into KitOps docs dir
+        run: |
+          # Remove existing directory to ensure any old files are removed
+          rm -rf "${KITOPS_PATH}/${PYKITOPS_DOCS_PATH}"
+          mkdir -p "${KITOPS_PATH}/${PYKITOPS_DOCS_PATH}"
+          cp -r docs/* "${KITOPS_PATH}/${PYKITOPS_DOCS_PATH}"
+
+      - name: Get short SHA output
+        id: get-sha
+        run: |
+          SHA=${{ github.sha }}
+          echo "sha=${SHA:0:10}" >> $GITHUB_OUTPUT
+
+      - name: Open PR in KitOps repo with docs changes
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f   ## v7.0.5
+        with:
+          path: ${{ env.KITOPS_PATH }}
+          token: ${{ secrets.KITOPS_PAT }}
+          commit-message: |
+            Update pykitops documentation
+
+            Update pykitops documentation to reflect commit ${{ github.sha }}
+            in repository ${{ github.server_url }}/${{ github.repository }}
+          title: Update PyKitOps documentation
+          body: |
+            Update the pykitops section of the documentation to reflect commit 
+            [`${{ steps.get-sha.outputs.sha }})`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}) 
+            in ${{ github.server_url }}/${{ github.repository }}
+          branch: pykitops-docs-update
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}@users.noreply.github.com>
+          signoff: false
+          delete-branch: true
