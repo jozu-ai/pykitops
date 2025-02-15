@@ -25,30 +25,22 @@ from typing import Any, Dict, List
 import yaml
 
 from .utils import IS_A_TTY, Color, clean_empty_items, validate_dict
-from .validators.code_validator import CodeValidator
-from .validators.datasets_validator import DatasetsValidator
-from .validators.docs_validator import DocsValidator
-from .validators.manifest_version_validator import ManifestVersionValidator
-from .validators.model_validator import ModelValidator
-from .validators.package_validator import PackageValidator
+from .pydantic_kit import PydanticKitfile
 
 
-class Kitfile:
+class Kitfile(PydanticKitfile):
     """
-    Kitfile class to manage KitOps ModelKits and Kitfiles.
-
-    Attributes:
-        path (str): Path to the Kitfile.
+    Kitfile class now uses Pydantic for validation.
     """
 
-    def __init__(self, path: str | None = None):
+    def __init__(self, path: str | None = None, **kwargs):
         """
         Initialize the Kitfile from a path to an existing Kitfile, or
         create an empty Kitfile.
 
         Examples:
             >>> kitfile = Kitfile(path="path/to/Kitfile")
-            >>> kitfile.to_yaml()
+            >>> kitfile.yaml()
 
             >>> kitfile = Kitfile()
             >>> kitfile.manifestVersion = "1.0"
@@ -66,7 +58,7 @@ class Kitfile:
             ...                  "description": "Model description",
             ...                  "license": "Apache-2.0", "parts": [],
             ...                  "parameters": ""}
-            >>> kitfile.to_yaml()
+            >>> kitfile.yaml()
             'manifestVersion: 1.0
              package:
                  name: my_package
@@ -101,7 +93,7 @@ class Kitfile:
         Returns:
             Kitfile (Kitfile): Kitfile object.
         """
-        self._data: Dict = {}
+        super().__init__(**kwargs)
         self._kitfile_allowed_keys = {
             "manifestVersion",
             "package",
@@ -111,72 +103,8 @@ class Kitfile:
             "model",
         }
 
-        # initialize the kitfile section validators
-        self._initialize_kitfile_section_validators()
-
-        # initialize an empty kitfile object
-        self.manifestVersion = ""
-        self.package = {"name": "", "version": "", "description": "", "authors": []}
-        self.code = []
-        self.datasets = []
-        self.docs = []
-        self.model = {
-            "name": "",
-            "path": "",
-            "description": "",
-            "framework": "",
-            "license": "",
-            "version": "",
-            "parts": [],
-            "parameters": "",
-        }
-
         if path:
             self.load(path)
-
-    def _initialize_kitfile_section_validators(self):
-        """
-        Initialize validators for Kitfile sections.
-        """
-        self._manifestVersion_validator = ManifestVersionValidator(
-            section="manifestVersion", allowed_keys=set()
-        )
-        self._package_validator = PackageValidator(
-            section="package",
-            allowed_keys={"name", "version", "description", "authors"},
-        )
-        self._code_validator = CodeValidator(
-            section="code", allowed_keys={"path", "description", "license"}
-        )
-        self._datasets_validator = DatasetsValidator(
-            section="datasets", allowed_keys={"name", "path", "description", "license"}
-        )
-        self._docs_validator = DocsValidator(
-            section="docs", allowed_keys={"path", "description"}
-        )
-        self._model_validator = ModelValidator(
-            section="model",
-            allowed_keys={
-                "name",
-                "path",
-                "framework",
-                "version",
-                "description",
-                "license",
-                "parts",
-                "parameters",
-            },
-        )
-
-    def _validate_and_set_attributes(self, data: Dict[str, Any]):
-        """
-        Validate and set attributes from the provided data.
-
-        Args:
-            data (Dict[str, Any]): Data to validate and set.
-        """
-        for key, value in data.items():
-            self.__setattr__(key, value)
 
     def load(self, path):
         """
@@ -214,133 +142,8 @@ class Kitfile:
                 + f"keys: {', '.join(self._kitfile_allowed_keys)}"
             ) from e
         # kitfile has been successfully loaded into data
-        self._validate_and_set_attributes(data)
-
-    @property
-    def manifestVersion(self) -> str:
-        """
-        Get the manifest version.
-
-        Returns:
-            str: Manifest version.
-        """
-        return self._data["manifestVersion"]
-
-    @manifestVersion.setter
-    def manifestVersion(self, value: str):
-        """
-        Set the manifest version.
-
-        Args:
-            value (str): Manifest version.
-        """
-        self._manifestVersion_validator.validate(data=value)
-        self._data["manifestVersion"] = value
-
-    @property
-    def package(self) -> Dict[str, Any]:
-        """
-        Get the package information.
-
-        Returns:
-            Dict[str, Any]: Package information.
-        """
-        return self._data["package"]
-
-    @package.setter
-    def package(self, value: Dict[str, Any]):
-        """
-        Set the package information.
-
-        Args:
-            value (Dict[str, Any]): Package information.
-        """
-        self._package_validator.validate(data=value)
-        self._data["package"] = value
-
-    @property
-    def code(self) -> List[Dict[str, Any]]:
-        """
-        Get the code section.
-
-        Returns:
-            List[Dict[str, Any]]: Code section.
-        """
-        return self._data["code"]
-
-    @code.setter
-    def code(self, value: List[Dict[str, Any]]):
-        """
-        Set the code section.
-
-        Args:
-            value (List[Dict[str, Any]]): Code section.
-        """
-        self._code_validator.validate(data=value)
-        self._data["code"] = value
-
-    @property
-    def datasets(self) -> List[Dict[str, Any]]:
-        """
-        Get the datasets section.
-
-        Returns:
-            List[Dict[str, Any]]: Datasets section.
-        """
-        return self._data["datasets"]
-
-    @datasets.setter
-    def datasets(self, value: List[Dict[str, Any]]):
-        """
-        Set the datasets section.
-
-        Args:
-            value (List[Dict[str, Any]]): Datasets section.
-        """
-        self._datasets_validator.validate(data=value)
-        self._data["datasets"] = value
-
-    @property
-    def docs(self) -> List[Dict[str, Any]]:
-        """
-        Get the docs section.
-
-        Returns:
-            List[Dict[str, Any]]: Docs section.
-        """
-        return self._data["docs"]
-
-    @docs.setter
-    def docs(self, value: List[Dict[str, Any]]):
-        """
-        Set the docs section.
-
-        Args:
-            value (List[Dict[str, Any]]): Docs section.
-        """
-        self._docs_validator.validate(data=value)
-        self._data["docs"] = value
-
-    @property
-    def model(self) -> Dict[str, Any]:
-        """
-        Get the model section.
-
-        Returns:
-            Dict[str, Any]: Model section.
-        """
-        return self._data["model"]
-
-    @model.setter
-    def model(self, value: Dict[str, Any]):
-        """
-        Set the model section.
-
-        Args:
-            value (Dict[str, Any]): Model section.
-        """
-        self._model_validator.validate(data=value)
-        self._data["model"] = value
+        for key, value in data.items():
+            setattr(self, key, value)
 
     def to_yaml(self, suppress_empty_values: bool = True) -> str:
         """
@@ -352,9 +155,8 @@ class Kitfile:
         Returns:
             str: YAML representation of the Kitfile.
         """
-        dict_to_print = self._data
+        dict_to_print = self.dict(exclude_unset=True)
         if suppress_empty_values:
-            dict_to_print = copy.deepcopy(self._data)
             dict_to_print = clean_empty_items(dict_to_print)
 
         return yaml.safe_dump(
@@ -392,7 +194,16 @@ class Kitfile:
             >>> kitfile.save("path/to/Kitfile")
         """
         with open(path, "w") as file:
-            file.write(self.to_yaml())
+            file.write(self.yaml())
 
         if print:
             self.print()
+
+    def yaml(self) -> str:
+        """
+        Use Pydantic's dict() or json() to generate YAML.
+
+        Returns:
+            str: YAML representation of the Kitfile.
+        """
+        return yaml.safe_dump(self.dict(exclude_unset=True), sort_keys=False)
