@@ -263,7 +263,7 @@ class ModelKitManager:
         os.chdir(self.working_directory)
 
         if save_kitfile:
-            self.kitfile.save()
+            self.kitfile.save(print=False)
 
         if with_login_and_logout:
             kit.login(
