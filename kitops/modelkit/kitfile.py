@@ -21,6 +21,7 @@ Define the Kitfile class to manage KitOps ModelKits and Kitfiles.
 import copy
 from pathlib import Path
 from typing import Any, Dict, List, Set
+from warnings import warn
 
 import yaml
 
@@ -140,22 +141,16 @@ class Kitfile:
         """
         Initialize validators for Kitfile sections.
         """
-        self._manifestVersion_validator = ManifestVersionValidator(
-            section="manifestVersion", allowed_keys=set()
-        )
+        self._manifestVersion_validator = ManifestVersionValidator(section="manifestVersion", allowed_keys=set())
         self._package_validator = PackageValidator(
             section="package",
             allowed_keys={"name", "version", "description", "authors"},
         )
-        self._code_validator = CodeValidator(
-            section="code", allowed_keys={"path", "description", "license"}
-        )
+        self._code_validator = CodeValidator(section="code", allowed_keys={"path", "description", "license"})
         self._datasets_validator = DatasetsValidator(
             section="datasets", allowed_keys={"name", "path", "description", "license"}
         )
-        self._docs_validator = DocsValidator(
-            section="docs", allowed_keys={"path", "description"}
-        )
+        self._docs_validator = DocsValidator(section="docs", allowed_keys={"path", "description"})
         self._model_validator = ModelValidator(
             section="model",
             allowed_keys={
@@ -199,9 +194,7 @@ class Kitfile:
         except yaml.YAMLError as e:
             if mark := getattr(e, "problem_mark", None):
                 raise yaml.YAMLError(
-                    "Error parsing Kitfile at "
-                    + f"line{mark.line + 1}, "
-                    + f"column:{mark.column + 1}."
+                    "Error parsing Kitfile at " + f"line{mark.line + 1}, " + f"column:{mark.column + 1}."
                 ) from e
             else:
                 raise
@@ -210,8 +203,7 @@ class Kitfile:
             validate_dict(value=data, allowed_keys=self._kitfile_allowed_keys)
         except ValueError as e:
             raise ValueError(
-                "Kitfile must be a dictionary with allowed "
-                + f"keys: {', '.join(self._kitfile_allowed_keys)}"
+                "Kitfile must be a dictionary with allowed " + f"keys: {', '.join(self._kitfile_allowed_keys)}"
             ) from e
         # kitfile has been successfully loaded into data
         self._validate_and_set_attributes(data)
@@ -357,9 +349,7 @@ class Kitfile:
             dict_to_print = copy.deepcopy(self._data)
             dict_to_print = clean_empty_items(dict_to_print)
 
-        return yaml.safe_dump(
-            data=dict_to_print, sort_keys=False, default_flow_style=False
-        )
+        return yaml.safe_dump(data=dict_to_print, sort_keys=False, default_flow_style=False)
 
     def print(self) -> None:
         """
@@ -368,6 +358,12 @@ class Kitfile:
         Returns:
             None
         """
+        warn(
+            "Kitfile.print() is going to be deprecated. " \
+            "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         print("\n\nKitfile Contents...")
         print("===================\n")
         output = self.to_yaml()
@@ -394,4 +390,10 @@ class Kitfile:
         Path(path).write_text(self.to_yaml(), encoding="utf-8")
 
         if print:
+            warn(
+                "print argument is going to be deprecated. " \
+                "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             self.print()
