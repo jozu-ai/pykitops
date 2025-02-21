@@ -46,6 +46,3 @@ class StringValidator:
                 f"Problem processing '{self.section}'. "
                 + f"Expected a string but got {type(data).__name__}"
             )
-        # data = data.strip()
-        # if not data:
-        #     raise ValueError(f"String value must be non-empty.")
