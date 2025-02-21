@@ -258,10 +258,6 @@ class ModelKitManager:
         Returns:
             None
         """
-        # save the current directory so we can return to it later
-        current_directory = os.getcwd()
-        os.chdir(self.working_directory)
-
         if save_kitfile:
             self.kitfile.save()
 
@@ -271,13 +267,10 @@ class ModelKitManager:
                 passwd=self.user_credentials.password,
                 registry=self.modelkit_reference.registry,
             )
-        kit.pack(self.modelkit_reference.modelkit_tag)
+        kit.pack(self.modelkit_reference.modelkit_tag, working_directory=self.working_directory)
         kit.push(self.modelkit_reference.modelkit_tag)
         if with_login_and_logout:
             kit.logout(registry=self.modelkit_reference.registry)
-
-        # return to the original directory
-        os.chdir(current_directory)
 
     def remove_modelkit(
         self,

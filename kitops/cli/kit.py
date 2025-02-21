@@ -247,12 +247,13 @@ def logout(registry: Optional[str] = "jozu.ml", **kwargs) -> None:
     print(result.stdout)
 
 
-def pack(repo_path_with_tag: str, **kwargs) -> None:
+def pack(repo_path_with_tag: str, working_directory: Optional[str] = ".", **kwargs) -> None:
     """
     Packs the current directory into a ModelKit package with a specified tag.
 
     Args:
         repo_path_with_tag (str): The repository path along with the tag to be used for the package.
+        working_direcotry (str): The directory where the Kitfile is located. Defaults to ".".
         **kwargs: Additional arguments to pass to the command.
 
     Returns:
@@ -262,7 +263,7 @@ def pack(repo_path_with_tag: str, **kwargs) -> None:
         subprocess.CalledProcessError: If the command returns a non-zero exit status,
         The exception contains the return code and the standard error output.
     """
-    command = ["kit", "pack", ".", "--tag", repo_path_with_tag]
+    command = ["kit", "pack", working_directory, "--tag", repo_path_with_tag]
 
     command.extend(_process_command_flags(kit_cmd_name="pack", **kwargs))
     result = _run(command=command)
