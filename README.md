@@ -1,6 +1,6 @@
 # PyKitOps
 
-PyKitOps is an open source Python SDK for managing [KitOps](https://kitops.ml) ModelKits. KitOps is a packaging, versioning, and sharing system for AI/ML projects that uses open standards so it works with the AI/ML, development, and DevOps tools you are already using, and can be stored in your enterprise container registry. 
+PyKitOps is an open source Python SDK for managing [KitOps](https://kitops.org) ModelKits. KitOps is a packaging, versioning, and sharing system for AI/ML projects that uses open standards so it works with the AI/ML, development, and DevOps tools you are already using, and can be stored in your enterprise container registry. 
 
 PyKitOps makes it easy to create a KitOps ModelKit for your AI/ML project directly in code. This makes PyKitOps preferred when assembling a ModelKit from:
 
