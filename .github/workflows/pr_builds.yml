@@ -19,7 +19,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          poetry install --with=dev --without=docs
+          poetry install --with=dev
   
       - name: Run Tests
         run: poetry run pytest

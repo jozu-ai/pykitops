@@ -1,11 +1,9 @@
 name: Sync docs to KitOps repository
 
 on:
-  push:
-    branches:
-      - "main"
-    paths:
-      - "docs/**"
+  workflow_call:
+  
+  workflow_dispatch:
 
 env:
   KITOPS_PATH: "kitops-clone"

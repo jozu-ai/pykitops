@@ -35,11 +35,6 @@ pytest = "^7.4.3"
 ruff = "^0.9.6"
 types-pyyaml = "^6.0.12.20241230"
 
-[tool.poetry.group.docs.dependencies]
-mkdocs-material = "^9.6.3"
-mkdocstrings = "^0.28.0"
-mkdocs = "^1.6.1"
-
 [tool.ruff]
 line-length = 120
 
