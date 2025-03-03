@@ -2,17 +2,11 @@ name: Build and Deploy Package and Docs
 
 on:
   workflow_dispatch:
-    inputs: 
-      version_type: 
-        description: 'Select the version type to bump' 
-        required: true 
-        default: 'patch' 
-        type: choice 
-        options: 
-          - patch
-          - minor
-          - major
 
+  push:
+    tags:
+      - 'v*'
+        
 env:
   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -48,7 +42,7 @@ jobs:
       # Install dependencies
       - name: Install dependencies
         run: |
-          pipx install twine bump2version
+          pipx install twine
           
       # Configure Git author identity 
       - name: Configure Git author 
@@ -63,16 +57,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      # Push changes
-      - name: Push changes
-        run: |
-          git push origin --tags
-          git push origin
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
       - name: Install dependencies
         run: poetry install --with=dev --without=docs
+
+      - name: Verify lib version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          EXPECTED_VERSION=v$(poetry version -s)
+          if [[ "${EXPECTED_VERSION}" != "${TAG_NAME}" ]]; then
+            echo "Versions don't match"
+            exit 1
+          fi
     
       - name: Run Tests
         run: poetry run pytest
