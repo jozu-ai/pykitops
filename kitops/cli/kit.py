@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 import os
 import subprocess
+from logging import getLogger
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -26,6 +27,8 @@ import yaml
 from ..modelkit.kitfile import Kitfile
 from ..modelkit.utils import IS_A_TTY, Color
 from .utils import _process_command_flags
+
+LOG = getLogger(__name__)
 
 
 def import_from_hf(repo_path_without_tag: str, **kwargs) -> None:
@@ -54,7 +57,7 @@ def import_from_hf(repo_path_without_tag: str, **kwargs) -> None:
 
     command.extend(_process_command_flags(kit_cmd_name="import", **kwargs))
     result = _run(command=command, input="n\n")
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def info(
@@ -91,8 +94,6 @@ def info(
 
     command.extend(_process_command_flags(kit_cmd_name="info", **kwargs))
     result = _run(command=command)
-    kit_info = result.stdout.strip()
-    print(kit_info)
     kit_info = yaml.safe_load(result.stdout.strip())
     return kit_info
 
@@ -136,7 +137,7 @@ def init(
 
     command.extend(_process_command_flags(kit_cmd_name="init", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
     kitfile = Kitfile(os.path.join(directory, "Kitfile"))
     return kitfile
 
@@ -165,8 +166,6 @@ def inspect(
 
     command.extend(_process_command_flags(kit_cmd_name="inspect", **kwargs))
     result = _run(command=command)
-    kit_inspect = result.stdout.strip()
-    print(kit_inspect)
     kit_inspect = json.loads(result.stdout.strip())
     return kit_inspect
 
@@ -195,7 +194,6 @@ def list(repo_path_without_tag: Optional[str] = None, **kwargs) -> str:
     command.extend(_process_command_flags(kit_cmd_name="list", **kwargs))
     result = _run(command=command)
     kit_list = result.stdout.strip()
-    print(kit_list)
     return kit_list
 
 
@@ -222,7 +220,7 @@ def login(
 
     command.extend(_process_command_flags(kit_cmd_name="login", **kwargs))
     result = _run(command=command, input=passwd)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def logout(registry: Optional[str] = "jozu.ml", **kwargs) -> None:
@@ -244,15 +242,16 @@ def logout(registry: Optional[str] = "jozu.ml", **kwargs) -> None:
 
     command.extend(_process_command_flags(kit_cmd_name="logout", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
-def pack(repo_path_with_tag: str, **kwargs) -> None:
+def pack(repo_path_with_tag: str, working_directory: Optional[str] = ".", **kwargs) -> None:
     """
     Packs the current directory into a ModelKit package with a specified tag.
 
     Args:
         repo_path_with_tag (str): The repository path along with the tag to be used for the package.
+        working_direcotry (str): The directory where the Kitfile is located. Defaults to ".".
         **kwargs: Additional arguments to pass to the command.
 
     Returns:
@@ -262,11 +261,11 @@ def pack(repo_path_with_tag: str, **kwargs) -> None:
         subprocess.CalledProcessError: If the command returns a non-zero exit status,
         The exception contains the return code and the standard error output.
     """
-    command = ["kit", "pack", ".", "--tag", repo_path_with_tag]
+    command = ["kit", "pack", working_directory, "--tag", repo_path_with_tag]
 
     command.extend(_process_command_flags(kit_cmd_name="pack", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def pull(repo_path_with_tag: str, **kwargs) -> None:
@@ -288,7 +287,7 @@ def pull(repo_path_with_tag: str, **kwargs) -> None:
 
     command.extend(_process_command_flags(kit_cmd_name="pull", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def push(repo_path_with_tag: str, **kwargs) -> None:
@@ -310,7 +309,7 @@ def push(repo_path_with_tag: str, **kwargs) -> None:
 
     command.extend(_process_command_flags(kit_cmd_name="push", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def remove(repo_path_with_tag: str, **kwargs) -> None:
@@ -332,7 +331,7 @@ def remove(repo_path_with_tag: str, **kwargs) -> None:
 
     command.extend(_process_command_flags(kit_cmd_name="remove", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def tag(repo_path_with_tag: str, repo_path_with_new_tag: str, **kwargs) -> None:
@@ -359,7 +358,7 @@ def tag(repo_path_with_tag: str, repo_path_with_new_tag: str, **kwargs) -> None:
 
     command.extend(_process_command_flags(kit_cmd_name="tag", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def unpack(
@@ -392,7 +391,7 @@ def unpack(
 
     command.extend(_process_command_flags(kit_cmd_name="unpack", **kwargs))
     result = _run(command=command)
-    print(result.stdout)
+    LOG.info(result.stdout)
 
 
 def version(**kwargs) -> str:
@@ -415,7 +414,6 @@ def version(**kwargs) -> str:
     command.extend(_process_command_flags(kit_cmd_name="version", **kwargs))
     result = _run(command=command)
     version = result.stdout.strip()
-    print(version)
     return version
 
 
@@ -442,7 +440,7 @@ def _run(
         output = "% " + " ".join(command)
         if IS_A_TTY:
             output = f"{Color.CYAN.value}{output}{Color.RESET.value}"
-        print(output, flush=True)
+        LOG.info(output, flush=True)
 
     # Because check=True is used, any non-zero exit status will raise a CalledProcessError.
     return subprocess.run(

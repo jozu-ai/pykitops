@@ -96,7 +96,7 @@ jobs:
       - name: Build mkdocs
         run: |
           poetry install --with=docs
-          poerty run mkdocs build
+          poetry run mkdocs build
           
       # Build and deploy mkdocs to GitHub Pages
       - name: Deploy mkdocs

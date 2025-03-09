@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "kitops"
-version = "1.1.1"
+version = "1.2.0"
 authors = [
   { name="Brett Hodges", email="brett@jozu.com" },
 ]
@@ -27,13 +27,13 @@ Repository = "https://github.com/jozu-ai/pykitops"
 Documentation = "https://kitops.org/docs/pykitops/reference/"
 
 [tool.poetry.dependencies]
-python-dotenv = "^1.0.1"
-pyyaml = "^6.0.2"
-types-pyyaml = "^6.0.12.20241230"
+python-dotenv = "^1.0"
+pyyaml = "^6.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
 ruff = "^0.9.6"
+types-pyyaml = "^6.0.12.20241230"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs-material = "^9.6.3"

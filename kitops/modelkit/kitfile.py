@@ -19,6 +19,8 @@ Define the Kitfile class to manage KitOps ModelKits and Kitfiles.
 """
 
 from pathlib import Path
+from typing import Any, Dict, List, Set
+from warnings import warn
 
 import yaml
 
@@ -31,12 +33,14 @@ class Kitfile(PydanticKitfile):
     Kitfile class using Pydantic for validation.
     """
 
-    def __init__(self, path: str | None = None, **kwargs):
+    def __init__(self, path: str | None = None, **kwargs) -> None:
         """
         Initialize the Kitfile from a path to an existing Kitfile, or
         create an empty Kitfile.
 
         Examples:
+            >>> from kitops.modelkit import Kitfile
+            ...
             >>> kitfile = Kitfile(path="path/to/Kitfile")
             >>> kitfile.yaml()
 
@@ -147,6 +151,12 @@ class Kitfile(PydanticKitfile):
         Returns:
             None
         """
+        warn(
+            "Kitfile.print() is going to be deprecated. " \
+            "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         print("\n\nKitfile Contents...")
         print("===================\n")
         output: str = self.to_yaml()
@@ -173,6 +183,12 @@ class Kitfile(PydanticKitfile):
         Path(path).write_text(self.to_yaml(), encoding="utf-8")
 
         if print:
+            warn(
+                "print argument is going to be deprecated. " \
+                "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             self.print()
 
     def yaml(self, **kwargs) -> str:
