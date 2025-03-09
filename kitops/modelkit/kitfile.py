@@ -19,11 +19,20 @@ Define the Kitfile class to manage KitOps ModelKits and Kitfiles.
 """
 
 from pathlib import Path
+from typing import Optional
 from warnings import warn
 
 import yaml
 
-from .pydantic_kit import ALLOWED_KEYS, PydanticKitfile
+from .pydantic_kit import (
+    ALLOWED_KEYS,
+    CodeEntry,
+    DatasetEntry,
+    DocsEntry,
+    ModelSection,
+    Package,
+    PydanticKitfile,
+)
 from .utils import IS_A_TTY, Color
 
 
@@ -32,10 +41,19 @@ class Kitfile(PydanticKitfile):
     Kitfile class using Pydantic for validation.
     """
 
-    def __init__(self, path: str | None = None, **kwargs) -> None:
+    def __init__(
+        self,
+        path: Optional[str | None] = None,
+    ) -> None:
         """
         Initialize the Kitfile from a path to an existing Kitfile, or
         create an empty Kitfile.
+
+        Args:
+            path (str, optional): Path to existing Kitfile to load. Defaults to None.
+
+        Returns:
+            None
 
         Examples:
             >>> from kitops.modelkit import Kitfile
@@ -87,17 +105,38 @@ class Kitfile(PydanticKitfile):
                  version: 2.0.0
                  description: Model description
                  license: Apache-2.0'
-
-        Args:
-            path (str, optional): Path to existing Kitfile to load. Defaults to None.
-
-        Returns:
-            Kitfile (Kitfile): Kitfile object.
         """
         if path:
             self.load(path)
-        else:
-            super().__init__(**kwargs)
+
+    def build(
+        self,
+        manifestVersion: str,
+        package: Package | dict,
+        code: Optional[list[CodeEntry | dict]] = None,
+        datasets: Optional[list[DatasetEntry | dict]] = None,
+        docs: Optional[list[DocsEntry | dict]] = None,
+        model: Optional[ModelSection | dict] = None,
+    ) -> None:
+        """
+        Build a Kitfile from the provided data.
+
+        Args:
+            manifestVersion (str): Specifies the manifest format version.
+            package (Package | dict): This section provides general information about the AI/ML project.
+            code (Optional[list[CodeEntry | dict]], optional): Information about the source code. Defaults to None.
+            datasets (Optional[list[DatasetEntry | dict]], optional): Information for the datasets. Defaults to None.
+            docs (Optional[list[DocsEntry | dict]], optional): Included documentation for the model. Defaults to None.
+            model (Optional[ModelSection | dict], optional): Details of the models included. Defaults to None.
+        """
+        super().__init__(
+            manifestVersion=manifestVersion,
+            package=Package.model_validate(package),
+            code=[CodeEntry.model_validate(c) for c in code] if code is not None else [],
+            datasets=[DatasetEntry.model_validate(d) for d in datasets] if datasets is not None else [],
+            docs=[DocsEntry.model_validate(d) for d in docs] if docs is not None else [],
+            model=ModelSection.model_validate(model) if model is not None else None,
+        )
 
     def load(self, path: str) -> None:
         """
@@ -125,7 +164,7 @@ class Kitfile(PydanticKitfile):
         if any(ALLOWED_KEYS.difference(data.keys())):
             raise ValueError("Kitfile must be a dictionary with allowed " + f"keys: {', '.join(ALLOWED_KEYS)}")
         # kitfile has been successfully loaded into data
-        super().__init__(**data)
+        self.build(**data)
 
     def to_yaml(self, no_empty_values: bool = True) -> str:
         """
