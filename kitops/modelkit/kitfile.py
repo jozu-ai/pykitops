@@ -124,43 +124,37 @@ class Kitfile(PydanticKitfile):
                 # Load the yaml data
                 data = yaml.safe_load(kitfile)
         except yaml.YAMLError as e:
-            if hasattr(e, "problem_mark"):
-                mark = e.problem_mark
+            if mark := getattr(e, "problem_mark", None):
                 raise yaml.YAMLError(
-                    "Error parsing Kitfile at "
-                    + f"line{mark.line + 1}, "
-                    + f"column:{mark.column + 1}."
+                    "Error parsing Kitfile at " + f"line{mark.line + 1}, " + f"column:{mark.column + 1}."
                 ) from e
             else:
                 raise
 
-        try:
+        try:  # TODO: Refactor this to use Pydantic validation
             validate_dict(value=data, allowed_keys=self._kitfile_allowed_keys)
         except ValueError as e:
             raise ValueError(
-                "Kitfile must be a dictionary with allowed "
-                + f"keys: {', '.join(self._kitfile_allowed_keys)}"
+                "Kitfile must be a dictionary with allowed " + f"keys: {', '.join(self._kitfile_allowed_keys)}"
             ) from e
         # kitfile has been successfully loaded into data
         for key, value in data.items():
             setattr(self, key, value)
 
-    def to_yaml(self, suppress_empty_values: bool = True) -> str:
+    def to_yaml(self, no_empty_values: bool = True) -> str:
         """
         Serialize the Kitfile to YAML format.
 
         Args:
-            suppress_empty_values (bool, optional): Whether to suppress
+            no_empty_values (bool, optional): Whether to suppress
                 empty values. Defaults to True.
         Returns:
             str: YAML representation of the Kitfile.
         """
-        dict_to_print = self.dict(exclude_unset=True)
-        if suppress_empty_values:
-            dict_to_print = clean_empty_items(dict_to_print)
-
         return yaml.safe_dump(
-            data=dict_to_print, sort_keys=False, default_flow_style=False
+            data=self.model_dump(exclude_unset=True, exclude_none=no_empty_values),
+            sort_keys=False,
+            default_flow_style=False,
         )
 
     def print(self) -> None:
@@ -206,4 +200,4 @@ class Kitfile(PydanticKitfile):
         Returns:
             str: YAML representation of the Kitfile.
         """
-        return yaml.safe_dump(self.dict(exclude_unset=True), sort_keys=False)
+        return yaml.safe_dump(self.model_dump(), sort_keys=False)
