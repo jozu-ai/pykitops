@@ -23,7 +23,15 @@ class BasePathModel(BaseModel):
 
 
 class Package(BaseModel):
-    """This section provides general information about the AI/ML project."""
+    """
+    This section provides general information about the AI/ML project.
+
+    Args:
+        name (str): The name of the AI/ML project.
+        version (str): The current version of the project.
+        description (str): A brief overview of the project's purpose and capabilities.
+        authors (list[str]): A list of individuals or entities that have contributed to the project.
+    """
 
     name: str = Field(..., description="The name of the AI/ML project.")
     version: str = Field(
@@ -46,7 +54,14 @@ class Package(BaseModel):
 
 
 class CodeEntry(BasePathModel):
-    """Single entry with information about the source code."""
+    """
+    Single entry with information about the source code.
+
+    Args:
+        path (str): Location of the source code file or directory relative to the context.
+        description (str): Description of what the code does.
+        license (str): SPDX license identifier for the code.
+    """
 
     path: str = Field(..., description="Location of the source code file or directory relative to the context.")
     description: str = Field(..., description=" Description of what the code does.")
@@ -54,7 +69,15 @@ class CodeEntry(BasePathModel):
 
 
 class DatasetEntry(BasePathModel):
-    """Single entry with information about the datasets used."""
+    """
+    Single entry with information about the datasets used.
+
+    Args:
+        name (str): Name of the dataset.
+        path (str): Location of the dataset file or directory relative to the context.
+        description (str): Overview of the dataset.
+        license (str): SPDX license identifier for the dataset.
+    """
 
     name: str = Field(..., description=" Name of the dataset.")
     path: str = Field(..., description="Location of the dataset file or directory relative to the context.")
@@ -63,14 +86,27 @@ class DatasetEntry(BasePathModel):
 
 
 class DocsEntry(BasePathModel):
-    """Single entry with information about included documentation for the model."""
+    """
+    Single entry with information about included documentation for the model.
+
+    Args:
+        description (str): Description of the documentation.
+        path (str): Location of the documentation relative to the context.
+    """
 
     description: str = Field(..., description="Description of the documentation.")
     path: str = Field(..., description="Location of the documentation relative to the context.")
 
 
 class ModelPart(BasePathModel):
-    """One entry of the related files for the model, e.g. model weights."""
+    """
+    One entry of the related files for the model, e.g. model weights.
+
+    Args:
+        name (str): Identifier for the part.
+        path (str): Location of the file or a directory relative to the context.
+        type (str): The type of the part (e.g. LoRA weights).
+    """
 
     name: str = Field(..., description="Identifier for the part.")
     path: str = Field(..., description="Location of the file or a directory relative to the context.")
@@ -78,7 +114,20 @@ class ModelPart(BasePathModel):
 
 
 class ModelSection(BasePathModel):
-    """Details of the trained models included in the package."""
+    """
+    Details of the trained models included in the package.
+
+    Args:
+        name (str): Name of the model.
+        path (str): Location of the model file or directory relative to the context.
+        framework (str): AI/ML framework.
+        version (str): Version of the model.
+        description (str): Overview of the model.
+        license (str): SPDX license identifier for the model.
+        parts (list[ModelPart]): List of related files for the model (e.g. LoRA weights).
+        parameters (Any): An arbitrary section of YAML that can be used to store any additional data that may be 
+            relevant to the current model.
+    """
 
     name: str = Field(..., description="Name of the model.")
     path: str = Field(..., description="Location of the model file or directory relative to the context.")
@@ -106,6 +155,18 @@ class ModelSection(BasePathModel):
 
 
 class PydanticKitfile(BaseModel):
+    """
+    Base class for the Pydantic Kitfile model.
+
+    Args:
+        manifestVersion (str): Specifies the manifest format version.
+        package (Package): This section provides general information about the AI/ML project.
+        code (Optional[list[CodeEntry]]): Information about the source code.
+        datasets (Optional[list[DatasetEntry]]): Information about the datasets used.
+        docs (Optional[list[DocsEntry]]): Information about included documentation for the model.
+        model (Optional[ModelSection]): Details of the trained models included in the package.
+    """
+
     manifestVersion: str = Field(
         ...,
         description="Specifies the manifest format version.",
