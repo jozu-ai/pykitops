@@ -2,6 +2,7 @@ import os
 import shutil
 
 from kitops.modelkit.manager import ModelKitManager
+from kitops.modelkit.pydantic_kit import ModelSection
 
 
 def clean_temp_dir():
@@ -71,14 +72,15 @@ build_model()
 
 # update the Kitfile
 kitfile = manager.kitfile
-kitfile.model = {
-    "name": "titanic-survivability-predictor",
-    "path": "model/model.joblib",
-    "license": "Apache 2.0",
-    "framework": "scikit-learn",
-    "version": "1.0",
-    "description": "RandomForestClassifier",
-}
+kitfile.model = ModelSection.model_validate({
+        "name": "titanic-survivability-predictor",
+        "path": "model/model.joblib",
+        "license": "Apache 2.0",
+        "framework": "scikit-learn",
+        "version": "1.0",
+        "description": "RandomForestClassifier",
+    }
+)
 manager.kitfile.print()
 
 # update the ModelKit's tag to "latest"

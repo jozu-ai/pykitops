@@ -2,6 +2,7 @@
 import os
 
 from kitops.modelkit.kitfile import Kitfile
+from kitops.modelkit.pydantic_kit import Package
 
 
 def test_everything(fixtures: dict[str, str]):
@@ -22,12 +23,14 @@ def test_everything(fixtures: dict[str, str]):
     print("=======================================================")
 
     kitfile.manifestVersion = "2.0"
-    kitfile.package = {
-        "name": "New-Package",
-        "version": "2.0.0",
-        "description": "New description",
-        "authors": ["Author"],
-    }
+    kitfile.package = Package.model_validate(
+        {
+            "name": "New-Package",
+            "version": "2.0.0",
+            "description": "New description",
+            "authors": ["Author"],
+        }
+    )
 
     print("kitfile.manifestVersion: " + kitfile.manifestVersion)
     print("kitfile.package: ")
@@ -48,12 +51,14 @@ def test_everything(fixtures: dict[str, str]):
     print("=======================================================")
 
     kitfile.manifestVersion = "3.0"
-    kitfile.package = {
-        "name": "Another-Package",
-        "version": "3.0.0",
-        "description": "Another description",
-        "authors": ["Someone"],
-    }
+    kitfile.package = Package.model_validate(
+        {
+            "name": "Another-Package",
+            "version": "3.0.0",
+            "description": "Another description",
+            "authors": ["Someone"],
+        }
+    )
 
     print("=======================================================")
     # Serialize to YAML
