@@ -1,59 +1,134 @@
-from pydantic import BaseModel, model_validator
-from typing import Any, Dict, List, Optional, Set, Self
+from pathlib import Path
+from typing import Any, Optional, Self
+
+from pydantic import BaseModel, Field, model_validator
+
+
+class BasePathModel(BaseModel):
+    """Base class for validating paths."""
+
+    path: str
+
+    @model_validator(mode="after")
+    def validate_path(self) -> Self:
+        """Validate that the path exists."""
+        if not Path(self.path).exists():
+            raise FileNotFoundError(f"Path '{self.path}' not found.")
+        if Path(self.path).is_absolute():
+            try:
+                self.path = Path(self.path).relative_to(Path.cwd()).as_posix()
+            except ValueError:
+                raise ValueError("Path must be relative to the current working directory.")
+        return self
 
 
 class Package(BaseModel):
-    name: str
-    version: str
-    description: str
-    authors: List[str]
+    """This section provides general information about the AI/ML project."""
+
+    name: str = Field(..., description="The name of the AI/ML project.")
+    version: str = Field(
+        ...,
+        description="The current version of the project.",
+        examples=["1.2.3", "0.13a"],
+        coerce_numbers_to_str=True,
+    )
+    description: str = Field(..., description="A brief overview of the project's purpose and capabilities.")
+    authors: list[str] = Field(
+        ..., description="A list of individuals or entities that have contributed to the project.", min_length=1
+    )
 
     @model_validator(mode="after")
     def validate_authors(self) -> Self:
-        if not isinstance(self.authors, list):
+        """Validate that authors is a list of strings."""
+        if not all(isinstance(a, str) for a in self.authors):
             raise ValueError("Authors must be a list of strings.")
-        return Self
+        return self
 
 
-class CodeEntry(BaseModel):
-    path: str
-    description: str
-    license: str
+class CodeEntry(BasePathModel):
+    """Single entry with information about the source code."""
+
+    path: str = Field(..., description="Location of the source code file or directory relative to the context.")
+    description: str = Field(..., description=" Description of what the code does.")
+    license: str = Field(..., description="SPDX license identifier for the code.")
 
 
-class DatasetEntry(BaseModel):
-    name: str
-    path: str
-    description: str
-    license: str
+class DatasetEntry(BasePathModel):
+    """Single entry with information about the datasets used."""
+
+    name: str = Field(..., description=" Name of the dataset.")
+    path: str = Field(..., description="Location of the dataset file or directory relative to the context.")
+    description: str = Field(..., description="Overview of the dataset.")
+    license: str = Field(..., description="SPDX license identifier for the dataset.")
 
 
-class DocsEntry(BaseModel):
-    path: str
-    description: str
+class DocsEntry(BasePathModel):
+    """Single entry with information about included documentation for the model."""
+
+    description: str = Field(..., description="Description of the documentation.")
+    path: str = Field(..., description="Location of the documentation relative to the context.")
 
 
-class ModelPart(BaseModel):
-    name: str
-    path: str
-    type: str
+class ModelPart(BasePathModel):
+    """One entry of the related files for the model, e.g. model weights."""
+
+    name: str = Field(..., description="Identifier for the part.")
+    path: str = Field(..., description="Location of the file or a directory relative to the context.")
+    type: str = Field(..., description="The type of the part (e.g. LoRA weights).")
 
 
-class ModelSection(BaseModel):
-    name: str
-    path: str
-    framework: str
-    version: str
-    description: str
-    license: str
-    parts: List[ModelPart]
-    parameters: Any
+class ModelSection(BasePathModel):
+    """Details of the trained models included in the package."""
+
+    name: str = Field(..., description="Name of the model.")
+    path: str = Field(..., description="Location of the model file or directory relative to the context.")
+    framework: str = Field(..., description="AI/ML framework.", examples=["tensorflow", "pytorch", "onnx", "TensorRT"])
+    version: str = Field(
+        ...,
+        description="Version of the model.",
+        examples=["0.0a13", "1.8.0"],
+        coerce_numbers_to_str=True,
+    )
+    description: str = Field(..., description="Overview of the model.")
+    license: str = Field(..., description="SPDX license identifier for the model.")
+    parts: Optional[list[ModelPart]] = Field(
+        default_factory=lambda: [], description="List of related files for the model (e.g. LoRA weights)."
+    )
+    parameters: Optional[Any] = Field(
+        None,
+        description=(
+            "An arbitrary section of YAML that can be used to store any additional data that may be relevant to the"
+            " current model, with a few caveats. Only a json-compatible subset of YAML is supported. Strings will be "
+            "serialized without flow parameters. Numbers will be converted to decimal representations (0xFF -> 255, "
+            "1.2e+3 -> 1200). Maps will be sorted alphabetically by key."
+        ),
+    )
 
 
 class PydanticKitfile(BaseModel):
-    manifestVersion: str
-    package: Package
-    code: List[CodeEntry]
-    datasets: List[DatasetEntry]
-    docs: List[DocsEntry]
-    model: ModelSection
+    manifestVersion: str = Field(
+        ...,
+        description="Specifies the manifest format version.",
+        examples=["1.0.0", "0.13a"],
+        coerce_numbers_to_str=True,
+    )
+    package: Package = Field(..., description="This section provides general information about the AI/ML project.")
+    code: Optional[list[CodeEntry]] = Field(
+        default_factory=lambda: [], description="Information about the source code."
+    )
+    datasets: Optional[list[DatasetEntry]] = Field(
+        default_factory=lambda: [], description="Information about the datasets used."
+    )
+    docs: Optional[list[DocsEntry]] = Field(
+        default_factory=lambda: [], description="Information about included documentation for the model."
+    )
+    model: Optional[ModelSection] = Field(None, description="Details of the trained models included in the package.")
+
+    @model_validator(mode="after")
+    def check_attrs(self) -> Self:
+        if not any(getattr(self, e, None) for e in set(self.model_fields)):
+            raise AttributeError("At least one of 'code', 'datasets', 'docs', or 'model' is required.")
+        return self
+
+
+ALLOWED_KEYS = set(PydanticKitfile.model_fields)
