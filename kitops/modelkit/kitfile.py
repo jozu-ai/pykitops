@@ -18,19 +18,17 @@
 Define the Kitfile class to manage KitOps ModelKits and Kitfiles.
 """
 
-import copy
 from pathlib import Path
-from typing import Any, Dict, List
 
 import yaml
 
-from .utils import IS_A_TTY, Color, clean_empty_items, validate_dict
-from .pydantic_kit import PydanticKitfile
+from .pydantic_kit import ALLOWED_KEYS, PydanticKitfile
+from .utils import IS_A_TTY, Color
 
 
 class Kitfile(PydanticKitfile):
     """
-    Kitfile class now uses Pydantic for validation.
+    Kitfile class using Pydantic for validation.
     """
 
     def __init__(self, path: str | None = None, **kwargs):
@@ -93,20 +91,12 @@ class Kitfile(PydanticKitfile):
         Returns:
             Kitfile (Kitfile): Kitfile object.
         """
-        super().__init__(**kwargs)
-        self._kitfile_allowed_keys = {
-            "manifestVersion",
-            "package",
-            "code",
-            "datasets",
-            "docs",
-            "model",
-        }
-
         if path:
             self.load(path)
+        else:
+            super().__init__(**kwargs)
 
-    def load(self, path):
+    def load(self, path: str) -> None:
         """
         Load Kitfile data from a yaml-formatted file and set the
         corresponding attributes.
@@ -131,15 +121,10 @@ class Kitfile(PydanticKitfile):
             else:
                 raise
 
-        try:  # TODO: Refactor this to use Pydantic validation
-            validate_dict(value=data, allowed_keys=self._kitfile_allowed_keys)
-        except ValueError as e:
-            raise ValueError(
-                "Kitfile must be a dictionary with allowed " + f"keys: {', '.join(self._kitfile_allowed_keys)}"
-            ) from e
+        if any(ALLOWED_KEYS.difference(data.keys())):
+            raise ValueError("Kitfile must be a dictionary with allowed " + f"keys: {', '.join(ALLOWED_KEYS)}")
         # kitfile has been successfully loaded into data
-        for key, value in data.items():
-            setattr(self, key, value)
+        super().__init__(**data)
 
     def to_yaml(self, no_empty_values: bool = True) -> str:
         """
@@ -193,11 +178,14 @@ class Kitfile(PydanticKitfile):
         if print:
             self.print()
 
-    def yaml(self) -> str:
+    def yaml(self, **kwargs) -> str:
         """
         Use Pydantic's dict() or json() to generate YAML.
+
+        Args:
+            **kwargs: Additional arguments to pass to Pydantic model_dump method.
 
         Returns:
             str: YAML representation of the Kitfile.
         """
-        return yaml.safe_dump(self.model_dump(), sort_keys=False)
+        return yaml.safe_dump(self.model_dump(**kwargs), sort_keys=False)
