@@ -110,9 +110,7 @@ class Kitfile(PydanticKitfile):
 
         # try to load the kitfile
         try:
-            with open(kitfile_path, "r") as kitfile:
-                # Load the yaml data
-                data = yaml.safe_load(kitfile)
+            data: dict = yaml.safe_load(kitfile_path.read_text(encoding="utf-8"))
         except yaml.YAMLError as e:
             if mark := getattr(e, "problem_mark", None):
                 raise yaml.YAMLError(
@@ -137,7 +135,7 @@ class Kitfile(PydanticKitfile):
             str: YAML representation of the Kitfile.
         """
         return yaml.safe_dump(
-            data=self.model_dump(exclude_unset=True, exclude_none=no_empty_values),
+            data=self.model_dump(exclude_unset=no_empty_values, exclude_none=no_empty_values),
             sort_keys=False,
             default_flow_style=False,
         )
@@ -151,7 +149,7 @@ class Kitfile(PydanticKitfile):
         """
         print("\n\nKitfile Contents...")
         print("===================\n")
-        output = self.to_yaml()
+        output: str = self.to_yaml()
         if IS_A_TTY:
             output = f"{Color.GREEN.value}{output}{Color.RESET.value}"
         print(output)
@@ -172,8 +170,7 @@ class Kitfile(PydanticKitfile):
             >>> kitfile = Kitfile()
             >>> kitfile.save("path/to/Kitfile")
         """
-        with open(path, "w") as file:
-            file.write(self.yaml())
+        Path(path).write_text(self.to_yaml(), encoding="utf-8")
 
         if print:
             self.print()
