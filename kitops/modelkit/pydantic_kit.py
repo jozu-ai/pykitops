@@ -125,7 +125,7 @@ class ModelSection(BasePathModel):
         description (str): Overview of the model.
         license (str): SPDX license identifier for the model.
         parts (list[ModelPart]): List of related files for the model (e.g. LoRA weights).
-        parameters (Any): An arbitrary section of YAML that can be used to store any additional data that may be 
+        parameters (Any): An arbitrary section of YAML that can be used to store any additional data that may be
             relevant to the current model.
     """
 
