@@ -19,7 +19,6 @@ Define the Kitfile class to manage KitOps ModelKits and Kitfiles.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Set
 from warnings import warn
 
 import yaml
@@ -152,7 +151,7 @@ class Kitfile(PydanticKitfile):
             None
         """
         warn(
-            "Kitfile.print() is going to be deprecated. " \
+            "Kitfile.print() is going to be deprecated. "
             "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
             DeprecationWarning,
             stacklevel=2,
@@ -184,7 +183,7 @@ class Kitfile(PydanticKitfile):
 
         if print:
             warn(
-                "print argument is going to be deprecated. " \
+                "print argument is going to be deprecated. "
                 "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
                 DeprecationWarning,
                 stacklevel=2,
