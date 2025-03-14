@@ -45,13 +45,6 @@ class Package(BaseModel):
         ..., description="A list of individuals or entities that have contributed to the project.", min_length=1
     )
 
-    @model_validator(mode="after")
-    def validate_authors(self) -> Self:
-        """Validate that authors is a list of strings."""
-        if not all(isinstance(a, str) for a in self.authors):
-            raise ValueError("Authors must be a list of strings.")
-        return self
-
 
 class CodeEntry(BasePathModel):
     """
