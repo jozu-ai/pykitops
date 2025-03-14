@@ -33,17 +33,10 @@ class Package(BaseModel):
         authors (list[str]): A list of individuals or entities that have contributed to the project.
     """
 
-    name: str = Field(..., description="The name of the AI/ML project.")
-    version: str = Field(
-        ...,
-        description="The current version of the project.",
-        examples=["1.2.3", "0.13a"],
-        coerce_numbers_to_str=True,
-    )
-    description: str = Field(..., description="A brief overview of the project's purpose and capabilities.")
-    authors: list[str] = Field(
-        ..., description="A list of individuals or entities that have contributed to the project.", min_length=1
-    )
+    name: str
+    version: str = Field(..., examples=["1.2.3", "0.13a"], coerce_numbers_to_str=True)
+    description: str
+    authors: list[str] = Field(..., min_length=1)
 
 
 class CodeEntry(BasePathModel):
@@ -56,9 +49,9 @@ class CodeEntry(BasePathModel):
         license (str): SPDX license identifier for the code.
     """
 
-    path: FilePath = Field(..., description="Location of the source code file or directory relative to the context.")
-    description: str = Field(..., description=" Description of what the code does.")
-    license: str = Field(..., description="SPDX license identifier for the code.")
+    path: FilePath
+    description: str
+    license: str
 
 
 class DatasetEntry(BasePathModel):
@@ -72,10 +65,10 @@ class DatasetEntry(BasePathModel):
         license (str): SPDX license identifier for the dataset.
     """
 
-    name: str = Field(..., description=" Name of the dataset.")
-    path: FilePath = Field(..., description="Location of the dataset file or directory relative to the context.")
-    description: str = Field(..., description="Overview of the dataset.")
-    license: str = Field(..., description="SPDX license identifier for the dataset.")
+    name: str
+    path: FilePath
+    description: str
+    license: str
 
 
 class DocsEntry(BasePathModel):
@@ -87,8 +80,8 @@ class DocsEntry(BasePathModel):
         path (FilePath): Location of the documentation relative to the context.
     """
 
-    description: str = Field(..., description="Description of the documentation.")
-    path: FilePath = Field(..., description="Location of the documentation relative to the context.")
+    description: str
+    path: FilePath
 
 
 class ModelPart(BasePathModel):
@@ -101,9 +94,9 @@ class ModelPart(BasePathModel):
         type (str): The type of the part (e.g. LoRA weights).
     """
 
-    name: str = Field(..., description="Identifier for the part.")
-    path: FilePath = Field(..., description="Location of the file or a directory relative to the context.")
-    type: str = Field(..., description="The type of the part (e.g. LoRA weights).")
+    name: str
+    path: FilePath
+    type: str
 
 
 class ModelSection(BasePathModel):
@@ -122,20 +115,13 @@ class ModelSection(BasePathModel):
             relevant to the current model.
     """
 
-    name: str = Field(..., description="Name of the model.")
-    path: FilePath = Field(..., description="Location of the model file or directory relative to the context.")
-    framework: str = Field(..., description="AI/ML framework.", examples=["tensorflow", "pytorch", "onnx", "TensorRT"])
-    version: str = Field(
-        ...,
-        description="Version of the model.",
-        examples=["0.0a13", "1.8.0"],
-        coerce_numbers_to_str=True,
-    )
-    description: str = Field(..., description="Overview of the model.")
-    license: str = Field(..., description="SPDX license identifier for the model.")
-    parts: Optional[list[ModelPart]] = Field(
-        default_factory=lambda: [], description="List of related files for the model (e.g. LoRA weights)."
-    )
+    name: str
+    path: FilePath
+    framework: str = Field(..., examples=["tensorflow", "pytorch", "onnx", "TensorRT"])
+    version: str = Field(..., examples=["0.0a13", "1.8.0"], coerce_numbers_to_str=True)
+    description: str
+    license: str
+    parts: Optional[list[ModelPart]] = Field(default_factory=lambda: [])
     parameters: Optional[Any] = Field(
         None,
         description=(
@@ -160,23 +146,12 @@ class PydanticKitfile(BaseModel):
         model (Optional[ModelSection]): Details of the trained models included in the package.
     """
 
-    manifestVersion: str = Field(
-        ...,
-        description="Specifies the manifest format version.",
-        examples=["1.0.0", "0.13a"],
-        coerce_numbers_to_str=True,
-    )
-    package: Package = Field(..., description="This section provides general information about the AI/ML project.")
-    code: Optional[list[CodeEntry]] = Field(
-        default_factory=lambda: [], description="Information about the source code."
-    )
-    datasets: Optional[list[DatasetEntry]] = Field(
-        default_factory=lambda: [], description="Information about the datasets used."
-    )
-    docs: Optional[list[DocsEntry]] = Field(
-        default_factory=lambda: [], description="Information about included documentation for the model."
-    )
-    model: Optional[ModelSection] = Field(None, description="Details of the trained models included in the package.")
+    manifestVersion: str = Field(..., examples=["1.0.0", "0.13a"], coerce_numbers_to_str=True)
+    package: Package
+    code: Optional[list[CodeEntry]] = Field(default_factory=lambda: [])
+    datasets: Optional[list[DatasetEntry]] = Field(default_factory=lambda: [])
+    docs: Optional[list[DocsEntry]] = Field(default_factory=lambda: [])
+    model: Optional[ModelSection] = None
 
     @model_validator(mode="after")
     def check_attrs(self) -> Self:
