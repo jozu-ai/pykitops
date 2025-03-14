@@ -51,12 +51,12 @@ class CodeEntry(BasePathModel):
     Single entry with information about the source code.
 
     Args:
-        path (str): Location of the source code file or directory relative to the context.
+        path (FilePath): Location of the source code file or directory relative to the context.
         description (str): Description of what the code does.
         license (str): SPDX license identifier for the code.
     """
 
-    path: str = Field(..., description="Location of the source code file or directory relative to the context.")
+    path: FilePath = Field(..., description="Location of the source code file or directory relative to the context.")
     description: str = Field(..., description=" Description of what the code does.")
     license: str = Field(..., description="SPDX license identifier for the code.")
 
@@ -67,13 +67,13 @@ class DatasetEntry(BasePathModel):
 
     Args:
         name (str): Name of the dataset.
-        path (str): Location of the dataset file or directory relative to the context.
+        path (FilePath): Location of the dataset file or directory relative to the context.
         description (str): Overview of the dataset.
         license (str): SPDX license identifier for the dataset.
     """
 
     name: str = Field(..., description=" Name of the dataset.")
-    path: str = Field(..., description="Location of the dataset file or directory relative to the context.")
+    path: FilePath = Field(..., description="Location of the dataset file or directory relative to the context.")
     description: str = Field(..., description="Overview of the dataset.")
     license: str = Field(..., description="SPDX license identifier for the dataset.")
 
@@ -84,11 +84,11 @@ class DocsEntry(BasePathModel):
 
     Args:
         description (str): Description of the documentation.
-        path (str): Location of the documentation relative to the context.
+        path (FilePath): Location of the documentation relative to the context.
     """
 
     description: str = Field(..., description="Description of the documentation.")
-    path: str = Field(..., description="Location of the documentation relative to the context.")
+    path: FilePath = Field(..., description="Location of the documentation relative to the context.")
 
 
 class ModelPart(BasePathModel):
@@ -97,12 +97,12 @@ class ModelPart(BasePathModel):
 
     Args:
         name (str): Identifier for the part.
-        path (str): Location of the file or a directory relative to the context.
+        path (FilePath): Location of the file or a directory relative to the context.
         type (str): The type of the part (e.g. LoRA weights).
     """
 
     name: str = Field(..., description="Identifier for the part.")
-    path: str = Field(..., description="Location of the file or a directory relative to the context.")
+    path: FilePath = Field(..., description="Location of the file or a directory relative to the context.")
     type: str = Field(..., description="The type of the part (e.g. LoRA weights).")
 
 
@@ -112,7 +112,7 @@ class ModelSection(BasePathModel):
 
     Args:
         name (str): Name of the model.
-        path (str): Location of the model file or directory relative to the context.
+        path (FilePath): Location of the model file or directory relative to the context.
         framework (str): AI/ML framework.
         version (str): Version of the model.
         description (str): Overview of the model.
@@ -123,7 +123,7 @@ class ModelSection(BasePathModel):
     """
 
     name: str = Field(..., description="Name of the model.")
-    path: str = Field(..., description="Location of the model file or directory relative to the context.")
+    path: FilePath = Field(..., description="Location of the model file or directory relative to the context.")
     framework: str = Field(..., description="AI/ML framework.", examples=["tensorflow", "pytorch", "onnx", "TensorRT"])
     version: str = Field(
         ...,
