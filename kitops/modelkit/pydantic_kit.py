@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Any, Optional, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, FilePath, model_validator
 
 
 class BasePathModel(BaseModel):
     """Base class for validating paths."""
 
-    path: str
+    path: FilePath
 
     @model_validator(mode="after")
     def validate_path(self) -> Self:
@@ -16,7 +16,7 @@ class BasePathModel(BaseModel):
             raise FileNotFoundError(f"Path '{self.path}' not found.")
         if Path(self.path).is_absolute():
             try:
-                self.path = Path(self.path).relative_to(Path.cwd()).as_posix()
+                self.path = Path(self.path).relative_to(Path.cwd())
             except ValueError:
                 raise ValueError("Path must be relative to the current working directory.")
         return self
