@@ -59,7 +59,7 @@ class Kitfile(PydanticKitfile):
             >>> from kitops.modelkit import Kitfile
             ...
             >>> kitfile = Kitfile(path="path/to/Kitfile")
-            >>> kitfile.yaml()
+            >>> kitfile.to_yaml()
 
             >>> kitfile = Kitfile()
             >>> kitfile.manifestVersion = "1.0"
@@ -77,7 +77,7 @@ class Kitfile(PydanticKitfile):
             ...                  "description": "Model description",
             ...                  "license": "Apache-2.0", "parts": [],
             ...                  "parameters": ""}
-            >>> kitfile.yaml()
+            >>> kitfile.to_yaml()
             'manifestVersion: 1.0
              package:
                  name: my_package
@@ -155,9 +155,7 @@ class Kitfile(PydanticKitfile):
             data: dict = yaml.safe_load(kitfile_path.read_text(encoding="utf-8"))
         except yaml.YAMLError as e:
             if mark := getattr(e, "problem_mark", None):
-                raise yaml.YAMLError(
-                    f"Error parsing Kitfile at line{mark.line + 1}, column:{mark.column + 1}."
-                ) from e
+                raise yaml.YAMLError(f"Error parsing Kitfile at line{mark.line + 1}, column:{mark.column + 1}.") from e
             else:
                 raise
 
@@ -228,15 +226,3 @@ class Kitfile(PydanticKitfile):
                 stacklevel=2,
             )
             self.print()
-
-    def yaml(self, **kwargs) -> str:
-        """
-        Use Pydantic's dict() or json() to generate YAML.
-
-        Args:
-            **kwargs: Additional arguments to pass to Pydantic model_dump method.
-
-        Returns:
-            str: YAML representation of the Kitfile.
-        """
-        return yaml.safe_dump(self.model_dump(**kwargs), sort_keys=False)
