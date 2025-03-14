@@ -156,7 +156,7 @@ class Kitfile(PydanticKitfile):
         except yaml.YAMLError as e:
             if mark := getattr(e, "problem_mark", None):
                 raise yaml.YAMLError(
-                    "Error parsing Kitfile at " + f"line{mark.line + 1}, " + f"column:{mark.column + 1}."
+                    f"Error parsing Kitfile at line{mark.line + 1}, column:{mark.column + 1}."
                 ) from e
             else:
                 raise
