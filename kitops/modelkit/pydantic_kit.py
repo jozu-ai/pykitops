@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Any, Optional, Self
 
-from pydantic import BaseModel, Field, FilePath, model_validator
+from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 
 
 class BasePathModel(BaseModel):
     """Base class for validating paths."""
 
-    path: FilePath
+    path: FilePath | DirectoryPath
 
     @model_validator(mode="after")
     def validate_path(self) -> Self:
