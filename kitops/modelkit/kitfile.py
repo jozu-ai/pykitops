@@ -195,7 +195,7 @@ class Kitfile(PydanticKitfile):
         )
         print("\n\nKitfile Contents...")
         print("===================\n")
-        output: str = self.to_yaml()
+        output = self.to_yaml()
         if IS_A_TTY:
             output = f"{Color.GREEN.value}{output}{Color.RESET.value}"
         print(output)
