@@ -1,3 +1,23 @@
+# Copyright 2024 The KitOps Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+Define the PydanticKitfile class as parent to Kitfile.
+"""
+
 from pathlib import Path
 from typing import Any, Optional, Self
 
@@ -27,16 +47,16 @@ class Package(BaseModel):
     This section provides general information about the AI/ML project.
 
     Args:
-        name (str): The name of the AI/ML project.
-        version (str): The current version of the project.
-        description (str): A brief overview of the project's purpose and capabilities.
+        name (Optional[str]): The name of the AI/ML project.
+        version (Optional[str]): The current version of the project.
+        description (Optional[str]): A brief overview of the project's purpose and capabilities.
         authors (list[str]): A list of individuals or entities that have contributed to the project.
     """
 
-    name: str
-    version: str = Field(..., examples=["1.2.3", "0.13a"], coerce_numbers_to_str=True)
-    description: str
-    authors: list[str] = Field(..., min_length=1)
+    name: Optional[str] = ""
+    version: Optional[str] = Field(default="", examples=["1.2.3", "0.13a"], coerce_numbers_to_str=True)
+    description: Optional[str] = ""
+    authors: Optional[list[str]] = []
 
 
 class CodeEntry(BasePathModel):
@@ -45,13 +65,12 @@ class CodeEntry(BasePathModel):
 
     Args:
         path (FilePath): Location of the source code file or directory relative to the context.
-        description (str): Description of what the code does.
-        license (str): SPDX license identifier for the code.
+        description (Optional[str]): Description of what the code does.
+        license (Optional[str]): SPDX license identifier for the code.
     """
 
-    path: FilePath
-    description: str
-    license: str
+    description: Optional[str] = ""
+    license: Optional[str] = ""
 
 
 class DatasetEntry(BasePathModel):
@@ -65,10 +84,9 @@ class DatasetEntry(BasePathModel):
         license (str): SPDX license identifier for the dataset.
     """
 
-    name: str
-    path: FilePath
-    description: str
-    license: str
+    name: Optional[str] = ""
+    description: Optional[str] = ""
+    license: Optional[str] = ""
 
 
 class DocsEntry(BasePathModel):
@@ -76,12 +94,11 @@ class DocsEntry(BasePathModel):
     Single entry with information about included documentation for the model.
 
     Args:
-        description (str): Description of the documentation.
         path (FilePath): Location of the documentation relative to the context.
+        description (Optional[str]): Description of the documentation.
     """
 
-    description: str
-    path: FilePath
+    description: Optional[str] = ""
 
 
 class ModelPart(BasePathModel):
@@ -89,14 +106,13 @@ class ModelPart(BasePathModel):
     One entry of the related files for the model, e.g. model weights.
 
     Args:
-        name (str): Identifier for the part.
         path (FilePath): Location of the file or a directory relative to the context.
-        type (str): The type of the part (e.g. LoRA weights).
+        name (Optional[str]): Identifier for the part.
+        type (Optional[str]): The type of the part (e.g. LoRA weights).
     """
 
-    name: str
-    path: FilePath
-    type: str
+    name: Optional[str] = ""
+    type: Optional[str] = ""
 
 
 class ModelSection(BasePathModel):
@@ -104,26 +120,25 @@ class ModelSection(BasePathModel):
     Details of the trained models included in the package.
 
     Args:
-        name (str): Name of the model.
         path (FilePath): Location of the model file or directory relative to the context.
-        framework (str): AI/ML framework.
-        version (str): Version of the model.
-        description (str): Overview of the model.
-        license (str): SPDX license identifier for the model.
-        parts (list[ModelPart]): List of related files for the model (e.g. LoRA weights).
-        parameters (Any): An arbitrary section of YAML that can be used to store any additional data that may be
-            relevant to the current model.
+        name (Optional[str]): Name of the model.
+        framework (Optional[str]): AI/ML framework.
+        version (Optional[str]): Version of the model.
+        description (Optional[str]): Overview of the model.
+        license (Optional[str]): SPDX license identifier for the model.
+        parts (Optional[list[ModelPart]]): List of related files for the model (e.g. LoRA weights).
+        parameters (Optional[Any]): An arbitrary section of YAML that can be used to store any additional data that may
+            be relevant to the current model.
     """
 
-    name: str
-    path: FilePath
-    framework: str = Field(..., examples=["tensorflow", "pytorch", "onnx", "TensorRT"])
-    version: str = Field(..., examples=["0.0a13", "1.8.0"], coerce_numbers_to_str=True)
-    description: str
-    license: str
-    parts: Optional[list[ModelPart]] = Field(default_factory=lambda: [])
+    name: Optional[str] = ""
+    framework: Optional[str] = Field(default="", examples=["tensorflow", "pytorch", "onnx", "TensorRT"])
+    version: Optional[str] = Field(default="", examples=["0.0a13", "1.8.0"], coerce_numbers_to_str=True)
+    description: Optional[str] = ""
+    license: Optional[str] = ""
+    parts: Optional[list[ModelPart]] = []
     parameters: Optional[Any] = Field(
-        None,
+        default=None,
         description=(
             "An arbitrary section of YAML that can be used to store any additional data that may be relevant to the"
             " current model, with a few caveats. Only a json-compatible subset of YAML is supported. Strings will be "
@@ -146,18 +161,12 @@ class PydanticKitfile(BaseModel):
         model (Optional[ModelSection]): Details of the trained models included in the package.
     """
 
-    manifestVersion: str = Field(..., examples=["1.0.0", "0.13a"], coerce_numbers_to_str=True)
-    package: Package
-    code: Optional[list[CodeEntry]] = Field(default_factory=lambda: [])
-    datasets: Optional[list[DatasetEntry]] = Field(default_factory=lambda: [])
-    docs: Optional[list[DocsEntry]] = Field(default_factory=lambda: [])
+    manifestVersion: str = Field(default=..., examples=["1.0.0", "0.13a"], coerce_numbers_to_str=True)
+    package: Optional[Package] = Package()
+    code: Optional[list[CodeEntry]] = []
+    datasets: Optional[list[DatasetEntry]] = []
+    docs: Optional[list[DocsEntry]] = []
     model: Optional[ModelSection] = None
-
-    @model_validator(mode="after")
-    def check_attrs(self) -> Self:
-        if not any(getattr(self, e, None) for e in set(self.model_fields)):
-            raise AttributeError("At least one of 'code', 'datasets', 'docs', or 'model' is required.")
-        return self
 
 
 ALLOWED_KEYS = set(PydanticKitfile.model_fields)
