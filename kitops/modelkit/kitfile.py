@@ -19,38 +19,36 @@ Define the Kitfile class to manage KitOps ModelKits and Kitfiles.
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Literal, Optional
 from warnings import warn
 
 import yaml
 
-from .pydantic_kit import (
-    ALLOWED_KEYS,
-    CodeEntry,
-    DatasetEntry,
-    DocsEntry,
-    ModelSection,
-    Package,
-    PydanticKitfile,
-)
+from .pydantic_kit import ALLOWED_KEYS, PydanticKitfile
 from .utils import IS_A_TTY, Color
 
 
 class Kitfile(PydanticKitfile):
     """
     Kitfile class using Pydantic for validation.
+
+    Attributes:
+        manifestVersion (str): Specifies the manifest format version.
+        package (Optional[Package | dict]): This section provides general information about the AI/ML project.
+        code (Optional[list[CodeEntry | dict]]): Information about the source code. Defaults to empty list.
+        datasets (Optional[list[DatasetEntry | dict]): Information for the datasets. Defaults to empty list.
+        docs (Optional[list[DocsEntry | dict]): Included documentation for the model. Defaults to empty list.
+        model (Optional[ModelSection | dict | None]): Details of the models included. Defaults to None.
     """
 
-    def __init__(
-        self,
-        path: Optional[str | None] = None,
-    ) -> None:
+    def __init__(self, path: Optional[str | None] = None, **kwargs) -> None:
         """
         Initialize the Kitfile from a path to an existing Kitfile, or
         create an empty Kitfile.
 
         Args:
             path (str, optional): Path to existing Kitfile to load. Defaults to None.
+            kwargs: Additional keyword arguments.
 
         Returns:
             None
@@ -106,39 +104,15 @@ class Kitfile(PydanticKitfile):
                  description: Model description
                  license: Apache-2.0'
         """
+        config = {}
         if path:
-            self.load(path)
-
-    def build(
-        self,
-        manifestVersion: str,
-        package: Package | dict,
-        code: Optional[list[CodeEntry | dict]] = None,
-        datasets: Optional[list[DatasetEntry | dict]] = None,
-        docs: Optional[list[DocsEntry | dict]] = None,
-        model: Optional[ModelSection | dict] = None,
-    ) -> None:
-        """
-        Build a Kitfile from the provided data.
-
-        Args:
-            manifestVersion (str): Specifies the manifest format version.
-            package (Package | dict): This section provides general information about the AI/ML project.
-            code (Optional[list[CodeEntry | dict]], optional): Information about the source code. Defaults to None.
-            datasets (Optional[list[DatasetEntry | dict]], optional): Information for the datasets. Defaults to None.
-            docs (Optional[list[DocsEntry | dict]], optional): Included documentation for the model. Defaults to None.
-            model (Optional[ModelSection | dict], optional): Details of the models included. Defaults to None.
-        """
-        super().__init__(
-            manifestVersion=manifestVersion,
-            package=Package.model_validate(package),
-            code=[CodeEntry.model_validate(c) for c in code] if code is not None else [],
-            datasets=[DatasetEntry.model_validate(d) for d in datasets] if datasets is not None else [],
-            docs=[DocsEntry.model_validate(d) for d in docs] if docs is not None else [],
-            model=ModelSection.model_validate(model) if model is not None else None,
+            config: dict[str, Any] = {} | self.load(path=path) | kwargs
+        manifest_ver: Any | Literal["1.0.0"] = (
+            config.pop("manifestVersion", "") if "manifestVersion" in config else "1.0.0"
         )
+        super().__init__(manifestVersion=manifest_ver, **config)
 
-    def load(self, path: str) -> None:
+    def load(self, path: str) -> dict:
         """
         Load Kitfile data from a yaml-formatted file and set the
         corresponding attributes.
@@ -162,7 +136,7 @@ class Kitfile(PydanticKitfile):
         if any(ALLOWED_KEYS.difference(data.keys())):
             raise ValueError("Kitfile must be a dictionary with allowed " + f"keys: {', '.join(ALLOWED_KEYS)}")
         # kitfile has been successfully loaded into data
-        self.build(**data)
+        return data
 
     def to_yaml(self, suppress_empty_values: bool = True) -> str:
         """
@@ -188,9 +162,9 @@ class Kitfile(PydanticKitfile):
             None
         """
         warn(
-            "Kitfile.print() is going to be deprecated. "
+            message="Kitfile.print() is going to be deprecated. "
             "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
-            DeprecationWarning,
+            category=DeprecationWarning,
             stacklevel=2,
         )
         print("\n\nKitfile Contents...")
@@ -220,9 +194,9 @@ class Kitfile(PydanticKitfile):
 
         if print:
             warn(
-                "print argument is going to be deprecated. "
+                message="print argument is going to be deprecated. "
                 "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
-                DeprecationWarning,
+                category=DeprecationWarning,
                 stacklevel=2,
             )
             self.print()
