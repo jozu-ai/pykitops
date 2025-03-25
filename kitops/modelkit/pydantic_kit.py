@@ -18,6 +18,7 @@
 Define the PydanticKitfile class as parent to Kitfile.
 """
 
+import warnings
 from pathlib import Path
 from typing import Any, Optional, Self
 
@@ -35,10 +36,7 @@ class BasePathModel(BaseModel):
         if not Path(self.path).exists():
             raise FileNotFoundError(f"Path '{self.path}' not found.")
         if Path(self.path).is_absolute():
-            try:
-                self.path = Path(self.path).relative_to(Path.cwd())
-            except ValueError:
-                raise ValueError("Path must be relative to the current working directory.")
+            warnings.warn(message="Path must be relative to the current working directory.", category=UserWarning)
         return self
 
 
