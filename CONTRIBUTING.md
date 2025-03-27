@@ -105,7 +105,7 @@ To send us a pull request, please:
 1. Fork the repository.
 2. Modify the source; please focus on the specific change you are contributing.
 3. Ensure local tests pass.
-4. Commit to your fork using clear commit messages.
+4. Commit to your fork using clear commit messages. Don't forget to [sign off on your commits](#sign-off-on-commits)!
 5. Send us a pull request, answering any default questions in the pull request interface.
 6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
 
