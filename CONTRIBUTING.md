@@ -82,7 +82,7 @@ If you think there's something else you can help with please contact us in the [
 
 We use the project's GitHub issue tracker to report bugs or suggest features/enhancements.
 
-Before creating an issue, please check [existing open](https://github.com/kitops-ml/pykitops/issuess), or [recently closed](https://github.com/kitops-ml/pykitops/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aclosed%20), issues to make sure somebody else hasn't already 
+Before creating an issue, please check [existing open](https://github.com/kitops-ml/pykitops/issuess) or [recently closed](https://github.com/kitops-ml/pykitops/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aclosed%20) issues to make sure somebody else hasn't already 
 reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
 
 * A series of steps to reproduce
