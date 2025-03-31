@@ -18,34 +18,40 @@
 Define the Kitfile class to manage KitOps ModelKits and Kitfiles.
 """
 
-import copy
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Literal, Optional
 from warnings import warn
 
 import yaml
 
-from .utils import IS_A_TTY, Color, clean_empty_items, validate_dict
-from .validators.code_validator import CodeValidator
-from .validators.datasets_validator import DatasetsValidator
-from .validators.docs_validator import DocsValidator
-from .validators.manifest_version_validator import ManifestVersionValidator
-from .validators.model_validator import ModelValidator
-from .validators.package_validator import PackageValidator
+from .pydantic_kit import ALLOWED_KEYS, PydanticKitfile
+from .utils import IS_A_TTY, Color
 
 
-class Kitfile:
+class Kitfile(PydanticKitfile):
     """
-    Kitfile class to manage KitOps ModelKits and Kitfiles.
+    Kitfile class using Pydantic for validation.
 
     Attributes:
-        path (str): Path to the Kitfile.
+        manifestVersion (str): Specifies the manifest format version.
+        package (Optional[Package | dict]): This section provides general information about the AI/ML project.
+        code (Optional[list[CodeEntry | dict]]): Information about the source code. Defaults to empty list.
+        datasets (Optional[list[DatasetEntry | dict]): Information for the datasets. Defaults to empty list.
+        docs (Optional[list[DocsEntry | dict]): Included documentation for the model. Defaults to empty list.
+        model (Optional[ModelSection | dict | None]): Details of the models included. Defaults to None.
     """
 
-    def __init__(self, path: str | None = None) -> None:
+    def __init__(self, path: Optional[str | None] = None, **kwargs) -> None:
         """
         Initialize the Kitfile from a path to an existing Kitfile, or
         create an empty Kitfile.
+
+        Args:
+            path (str, optional): Path to existing Kitfile to load. Defaults to None.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            None
 
         Examples:
             >>> from kitops.modelkit import Kitfile
@@ -97,85 +103,16 @@ class Kitfile:
                  version: 2.0.0
                  description: Model description
                  license: Apache-2.0'
-
-        Args:
-            path (str, optional): Path to existing Kitfile to load. Defaults to None.
-
-        Returns:
-            Kitfile (Kitfile): Kitfile object.
         """
-        self._data: Dict = {}
-        self._kitfile_allowed_keys: Set[str] = {
-            "manifestVersion",
-            "package",
-            "code",
-            "datasets",
-            "docs",
-            "model",
-        }
-
-        # initialize the kitfile section validators
-        self._initialize_kitfile_section_validators()
-
-        # initialize an empty kitfile object
-        self.manifestVersion = ""
-        self.package = {"name": "", "version": "", "description": "", "authors": []}
-        self.code = []
-        self.datasets = []
-        self.docs = []
-        self.model = {
-            "name": "",
-            "path": "",
-            "description": "",
-            "framework": "",
-            "license": "",
-            "version": "",
-            "parts": [],
-            "parameters": "",
-        }
-
+        config = {}
         if path:
-            self.load(path)
-
-    def _initialize_kitfile_section_validators(self) -> None:
-        """
-        Initialize validators for Kitfile sections.
-        """
-        self._manifestVersion_validator = ManifestVersionValidator(section="manifestVersion", allowed_keys=set())
-        self._package_validator = PackageValidator(
-            section="package",
-            allowed_keys={"name", "version", "description", "authors"},
+            config: dict[str, Any] = {} | self.load(path=path) | kwargs
+        manifest_ver: Any | Literal["1.0.0"] = (
+            config.pop("manifestVersion", "") if "manifestVersion" in config else "1.0.0"
         )
-        self._code_validator = CodeValidator(section="code", allowed_keys={"path", "description", "license"})
-        self._datasets_validator = DatasetsValidator(
-            section="datasets", allowed_keys={"name", "path", "description", "license"}
-        )
-        self._docs_validator = DocsValidator(section="docs", allowed_keys={"path", "description"})
-        self._model_validator = ModelValidator(
-            section="model",
-            allowed_keys={
-                "name",
-                "path",
-                "framework",
-                "version",
-                "description",
-                "license",
-                "parts",
-                "parameters",
-            },
-        )
+        super().__init__(manifestVersion=manifest_ver, **config)
 
-    def _validate_and_set_attributes(self, data: Dict[str, Any]) -> None:
-        """
-        Validate and set attributes from the provided data.
-
-        Args:
-            data (Dict[str, Any]): Data to validate and set.
-        """
-        for key, value in data.items():
-            self.__setattr__(key, value)
-
-    def load(self, path):
+    def load(self, path: str) -> dict:
         """
         Load Kitfile data from a yaml-formatted file and set the
         corresponding attributes.
@@ -189,150 +126,17 @@ class Kitfile:
 
         # try to load the kitfile
         try:
-            data = yaml.safe_load(kitfile_path.read_text(encoding="utf-8"))
-
+            data: dict = yaml.safe_load(kitfile_path.read_text(encoding="utf-8"))
         except yaml.YAMLError as e:
             if mark := getattr(e, "problem_mark", None):
-                raise yaml.YAMLError(
-                    f"Error parsing Kitfile at line{mark.line + 1}, column:{mark.column + 1}."
-                ) from e
+                raise yaml.YAMLError(f"Error parsing Kitfile at line{mark.line + 1}, column:{mark.column + 1}.") from e
             else:
                 raise
 
-        try:
-            validate_dict(value=data, allowed_keys=self._kitfile_allowed_keys)
-        except ValueError as e:
-            raise ValueError(
-                f"Kitfile must be a dictionary with allowed keys: {', '.join(self._kitfile_allowed_keys)}"
-            ) from e
+        if any(ALLOWED_KEYS.difference(data.keys())):
+            raise ValueError("Kitfile must be a dictionary with allowed " + f"keys: {', '.join(ALLOWED_KEYS)}")
         # kitfile has been successfully loaded into data
-        self._validate_and_set_attributes(data)
-
-    @property
-    def manifestVersion(self) -> str:
-        """
-        Get the manifest version.
-
-        Returns:
-            str: Manifest version.
-        """
-        return self._data["manifestVersion"]
-
-    @manifestVersion.setter
-    def manifestVersion(self, value: str) -> None:
-        """
-        Set the manifest version.
-
-        Args:
-            value (str): Manifest version.
-        """
-        self._manifestVersion_validator.validate(data=value)
-        self._data["manifestVersion"] = value
-
-    @property
-    def package(self) -> Dict[str, Any]:
-        """
-        Get the package information.
-
-        Returns:
-            Dict[str, Any]: Package information.
-        """
-        return self._data["package"]
-
-    @package.setter
-    def package(self, value: Dict[str, Any]) -> None:
-        """
-        Set the package information.
-
-        Args:
-            value (Dict[str, Any]): Package information.
-        """
-        self._package_validator.validate(data=value)
-        self._data["package"] = value
-
-    @property
-    def code(self) -> List[Dict[str, Any]]:
-        """
-        Get the code section.
-
-        Returns:
-            List[Dict[str, Any]]: Code section.
-        """
-        return self._data["code"]
-
-    @code.setter
-    def code(self, value: List[Dict[str, Any]]) -> None:
-        """
-        Set the code section.
-
-        Args:
-            value (List[Dict[str, Any]]): Code section.
-        """
-        self._code_validator.validate(data=value)
-        self._data["code"] = value
-
-    @property
-    def datasets(self) -> List[Dict[str, Any]]:
-        """
-        Get the datasets section.
-
-        Returns:
-            List[Dict[str, Any]]: Datasets section.
-        """
-        return self._data["datasets"]
-
-    @datasets.setter
-    def datasets(self, value: List[Dict[str, Any]]) -> None:
-        """
-        Set the datasets section.
-
-        Args:
-            value (List[Dict[str, Any]]): Datasets section.
-        """
-        self._datasets_validator.validate(data=value)
-        self._data["datasets"] = value
-
-    @property
-    def docs(self) -> List[Dict[str, Any]]:
-        """
-        Get the docs section.
-
-        Returns:
-            List[Dict[str, Any]]: Docs section.
-        """
-        return self._data["docs"]
-
-    @docs.setter
-    def docs(self, value: List[Dict[str, Any]]) -> None:
-        """
-        Set the docs section.
-
-        Args:
-            value (List[Dict[str, Any]]): Docs section.
-        """
-        self._docs_validator.validate(data=value)
-        self._data["docs"] = value
-
-    @property
-    def model(self) -> Dict[str, Any]:
-        """
-        Get the model section.
-
-        Returns:
-            Dict[str, Any]: Model section.
-        """
-        return self._data["model"]
-
-    @model.setter
-    def model(self, value: Dict[str, Any]) -> None:
-        """
-        Set the model section.
-
-        Args:
-            value (Dict[str, Any]): Model section.
-        """
-        self._model_validator.validate(data=value)
-        self._data["model"] = value
+        return data
 
     def to_yaml(self, suppress_empty_values: bool = True) -> str:
         """
@@ -344,12 +148,11 @@ class Kitfile:
         Returns:
             str: YAML representation of the Kitfile.
         """
-        dict_to_print: Dict = self._data
-        if suppress_empty_values:
-            dict_to_print = copy.deepcopy(self._data)
-            dict_to_print = clean_empty_items(dict_to_print)
-
-        return yaml.safe_dump(data=dict_to_print, sort_keys=False, default_flow_style=False)
+        return yaml.safe_dump(
+            data=self.model_dump(exclude_unset=suppress_empty_values, exclude_none=suppress_empty_values),
+            sort_keys=False,
+            default_flow_style=False,
+        )
 
     def print(self) -> None:
         """
@@ -359,9 +162,9 @@ class Kitfile:
             None
         """
         warn(
-            "Kitfile.print() is going to be deprecated. " \
+            message="Kitfile.print() is going to be deprecated. "
             "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
-            DeprecationWarning,
+            category=DeprecationWarning,
             stacklevel=2,
         )
         print("\n\nKitfile Contents...")
@@ -391,9 +194,9 @@ class Kitfile:
 
         if print:
             warn(
-                "print argument is going to be deprecated. " \
+                message="print argument is going to be deprecated. "
                 "To print Kitfile use to_yaml() and your favorite way to log/print; date=2025-02-21",
-                DeprecationWarning,
+                category=DeprecationWarning,
                 stacklevel=2,
             )
             self.print()
